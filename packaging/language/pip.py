@@ -144,7 +144,7 @@ def _get_cmd_options(module, cmd):
     words = stdout.strip().split()
     cmd_options = [ x for x in words if x.startswith('--') ]
     return cmd_options
-    
+
 
 def _get_full_name(name, version=None):
     if version is None:
@@ -228,6 +228,7 @@ def main():
             extra_args=dict(default=None, required=False),
             chdir=dict(default=None, required=False),
             executable=dict(default=None, required=False),
+            pip_version=dict(default=None, required=False, type='str'),
         ),
         required_one_of=[['name', 'requirements']],
         mutually_exclusive=[['name', 'requirements']],
@@ -278,11 +279,11 @@ def main():
     pip = _get_pip(module, env, module.params['executable'])
 
     cmd = '%s %s' % (pip, state_map[state])
-    
+
     # If there's a virtualenv we want things we install to be able to use other
-    # installations that exist as binaries within this virtualenv. Example: we 
-    # install cython and then gevent -- gevent needs to use the cython binary, 
-    # not just a python package that will be found by calling the right python. 
+    # installations that exist as binaries within this virtualenv. Example: we
+    # install cython and then gevent -- gevent needs to use the cython binary,
+    # not just a python package that will be found by calling the right python.
     # So if there's a virtualenv, we add that bin/ to the beginning of the PATH
     # in run_command by setting path_prefix here.
     path_prefix = None
@@ -308,7 +309,7 @@ def main():
         cmd += ' %s' % _get_full_name(name, version)
     elif requirements:
         cmd += ' -r %s' % requirements
-    
+
     this_dir = tempfile.gettempdir()
     if chdir:
         this_dir = os.path.join(this_dir, chdir)
@@ -319,7 +320,7 @@ def main():
         elif name.startswith('svn+') or name.startswith('git+') or \
                 name.startswith('hg+') or name.startswith('bzr+'):
             module.exit_json(changed=True)
-        
+
         freeze_cmd = '%s freeze' % pip
         rc, out_pip, err_pip = module.run_command(freeze_cmd, cwd=this_dir)
 
