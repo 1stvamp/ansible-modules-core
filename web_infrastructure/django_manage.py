@@ -24,7 +24,11 @@ DOCUMENTATION = '''
 module: django_manage
 short_description: Manages a Django application.
 description:
-     - Manages a Django application using the I(manage.py) application frontend to I(django-admin). With the I(virtualenv) parameter, all management commands will be executed by the given I(virtualenv) installation.
+     - Manages a Django application using the I(manage.py) application frontend
+       to I(django-admin). With the I(virtualenv) parameter, all management
+       commands will be executed by the given I(virtualenv) installation. If
+       you provide C(manage_path) instead of C(app_path) that script path will
+       be used instead of I(manage.py)
 version_added: "1.1"
 options:
   command:
@@ -35,6 +39,10 @@ options:
   app_path:
     description:
       - The path to the root of the Django application where B(manage.py) lives.
+    required: true
+  manage_path:
+    description:
+      - Full path to the B(manage) script, if used C(app_path) is ignored.
     required: true
   settings:
     description:
@@ -200,6 +208,7 @@ def main():
         argument_spec=dict(
             command     = dict(default=None, required=True),
             app_path    = dict(default=None, required=True),
+            manage_path    = dict(default=None, required=True),
             settings    = dict(default=None, required=False),
             pythonpath  = dict(default=None, required=False, aliases=['python_path']),
             virtualenv  = dict(default=None, required=False, aliases=['virtual_env']),
@@ -215,11 +224,16 @@ def main():
             merge       = dict(default=None, required=False, type='bool'),
             link        = dict(default=None, required=False, type='bool'),
         ),
+        mutually_exclusive=[['app_path', 'manage_path']],
     )
 
     command = module.params['command']
     app_path = module.params['app_path']
     virtualenv = module.params['virtualenv']
+    manage_path = module.params['manage_path']
+
+    if not manage_path:
+        manage_page = 'manage.py'
 
     for param in specific_params:
         value = module.params[param]
@@ -236,7 +250,7 @@ def main():
 
     _ensure_virtualenv(module)
 
-    cmd = "python manage.py %s" % (command, )
+    cmd = "python %s %s" % (manage_path, command, )
 
     if command in noinput_commands:
         cmd = '%s --noinput' % cmd
